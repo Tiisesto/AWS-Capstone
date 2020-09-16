@@ -1,0 +1,211 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "tableCustomer": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": "5",
+          "WriteCapacityUnits": "5"
+        }
+      }
+    },
+    "s3awscloudtraillogs959923272187managementeventsd86755d3": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "Private",
+        "VersioningConfiguration": {
+          "Status": "Suspended"
+        }
+      }
+    },
+    "s3pat170": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "WebsiteConfiguration": {
+          "IndexDocument": "index.html"
+        },
+        "AccessControl": "Private",
+        "VersioningConfiguration": {
+          "Status": "Suspended"
+        }
+      }
+    },
+    "topicPATNotification": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "PAT Notification",
+        "Subscription": [
+          {
+            "Endpoint": "arn:aws:lambda:eu-west-1:959923272187:function:SNSTopic",
+            "Protocol": "lambda"
+          },
+          {
+            "Endpoint": "+27624509903",
+            "Protocol": "sms"
+          },
+          {
+            "Endpoint": "+27768652781",
+            "Protocol": "sms"
+          },
+          {
+            "Endpoint": "+27769418448",
+            "Protocol": "sms"
+          },
+          {
+            "Endpoint": "+27768132543",
+            "Protocol": "sms"
+          }
+        ]
+      }
+    },
+    "snspolicyPATNotification": {
+      "Type": "AWS::SNS::TopicPolicy",
+      "Properties": {
+        "Topics": [
+          {
+            "Ref": "topicPATNotification"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2008-10-17",
+          "Id": "__default_policy_ID",
+          "Statement": [
+            {
+              "Sid": "__default_statement_ID",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": [
+                "SNS:GetTopicAttributes",
+                "SNS:SetTopicAttributes",
+                "SNS:AddPermission",
+                "SNS:RemovePermission",
+                "SNS:DeleteTopic",
+                "SNS:Subscribe",
+                "SNS:ListSubscriptionsByTopic",
+                "SNS:Publish",
+                "SNS:Receive"
+              ],
+              "Resource": {
+                "Ref": "topicPATNotification"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceOwner": "959923272187"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "s3policyawscloudtraillogs959923272187managementeventsd86755d3": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "s3awscloudtraillogs959923272187managementeventsd86755d3"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AWSCloudTrailAclCheck20150319",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:GetBucketAcl",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    "aws-cloudtrail-logs-",
+                    "959923272187-management-events-d86755d3"
+                  ]
+                ]
+              }
+            },
+            {
+              "Sid": "AWSCloudTrailWrite20150319",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "cloudtrail.amazonaws.com"
+              },
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    "aws-cloudtrail-logs-",
+                    "959923272187-management-events-d86755d3/AWSLogs/959923272187/*"
+                  ]
+                ]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "s3:x-amz-acl": "bucket-owner-full-control"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "s3policypat170": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "s3pat170"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "PublicReadGetObject",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    "pat",
+                    "170/*"
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "trailmanagementevents": {
+      "Type": "AWS::CloudTrail::Trail",
+      "Properties": {
+        "IncludeGlobalServiceEvents": true,
+        "IsLogging": "true",
+        "S3BucketName": {
+          "Ref": "s3awscloudtraillogs959923272187managementeventsd86755d3"
+        }
+      }
+    }
+  },
+  "Description": "Serverless web app"
+}
